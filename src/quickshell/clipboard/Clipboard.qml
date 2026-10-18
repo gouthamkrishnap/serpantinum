@@ -150,7 +150,7 @@ PanelWindow {
     Process {
         id: clipWatcher
         running: true
-        command: ["wl-paste", "--watch", "echo", "1"]
+        command: ["sh", "-c", "wl-paste --watch echo 1 & w=$!; trap 'kill $w 2>/dev/null' EXIT TERM; while kill -0 $PPID 2>/dev/null && kill -0 $w 2>/dev/null; do sleep 1; done"]
         stdout: SplitParser {
             onRead: (data) => {
                 if (clipboardWindow.isVisible) {
@@ -593,7 +593,7 @@ PanelWindow {
             }
         }
 
-        property real dynamicCornerRadius: Math.max(0, Math.min(clipboardWindow.outerCornerRadius, (clipboardWindow.isSideAttached ? width : height)))
+        property real dynamicCornerRadius: Math.round(Math.max(0, Math.min(clipboardWindow.outerCornerRadius, (clipboardWindow.isSideAttached ? width : height))))
 
         x: {
             if (clipboardWindow.attachEdge === "left") return 0;
@@ -613,6 +613,16 @@ PanelWindow {
                 : clipboardWindow.animatedLauncherHeight
 
         opacity: (clipboardWindow.isVisible || animProgress > 0.001) ? 1.0 : 0.0
+
+        GlassFillets {
+            id: clipboardFillets
+            card: bgCard
+            filletRadius: container.dynamicCornerRadius
+            filletDir: clipboardWindow.attachEdge === "top" ? Qt.vector2d(0, -1)
+                     : clipboardWindow.attachEdge === "bottom" ? Qt.vector2d(0, 1)
+                     : clipboardWindow.attachEdge === "left" ? Qt.vector2d(-1, 0)
+                     : Qt.vector2d(1, 0)
+        }
 
         ShaderEffect {
             visible: container.dynamicCornerRadius > 0.5
@@ -667,6 +677,10 @@ PanelWindow {
             id: bgCard
             anchors.fill: parent
             radius: clipboardWindow.cornerRadius
+            topLeftRadius: (clipboardWindow.attachEdge === "top" || clipboardWindow.attachEdge === "left") ? 0 : clipboardWindow.cornerRadius
+            topRightRadius: (clipboardWindow.attachEdge === "top" || clipboardWindow.attachEdge === "right") ? 0 : clipboardWindow.cornerRadius
+            bottomLeftRadius: (clipboardWindow.attachEdge === "bottom" || clipboardWindow.attachEdge === "left") ? 0 : clipboardWindow.cornerRadius
+            bottomRightRadius: (clipboardWindow.attachEdge === "bottom" || clipboardWindow.attachEdge === "right") ? 0 : clipboardWindow.cornerRadius
             color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
             border.width: 0
             border.color: "transparent"
@@ -679,78 +693,8 @@ PanelWindow {
                 topRightRadius: parent.topRightRadius
                 bottomLeftRadius: parent.bottomLeftRadius
                 bottomRightRadius: parent.bottomRightRadius
-            }
-
-            Rectangle {
-                visible: clipboardWindow.attachEdge === "top" && container.dynamicCornerRadius > 0.5
-                x: 0
-                y: 0
-                width: container.dynamicCornerRadius
-                height: container.dynamicCornerRadius
-                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
-            }
-
-            Rectangle {
-                visible: clipboardWindow.attachEdge === "top" && container.dynamicCornerRadius > 0.5
-                x: parent.width - container.dynamicCornerRadius
-                y: 0
-                width: container.dynamicCornerRadius
-                height: container.dynamicCornerRadius
-                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
-            }
-
-            Rectangle {
-                visible: clipboardWindow.attachEdge === "bottom" && container.dynamicCornerRadius > 0.5
-                x: 0
-                y: parent.height - container.dynamicCornerRadius
-                width: container.dynamicCornerRadius
-                height: container.dynamicCornerRadius
-                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
-            }
-
-            Rectangle {
-                visible: clipboardWindow.attachEdge === "bottom" && container.dynamicCornerRadius > 0.5
-                x: parent.width - container.dynamicCornerRadius
-                y: parent.height - container.dynamicCornerRadius
-                width: container.dynamicCornerRadius
-                height: container.dynamicCornerRadius
-                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
-            }
-
-            Rectangle {
-                visible: clipboardWindow.attachEdge === "left" && container.dynamicCornerRadius > 0.5
-                x: 0
-                y: 0
-                width: container.dynamicCornerRadius
-                height: container.dynamicCornerRadius
-                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
-            }
-
-            Rectangle {
-                visible: clipboardWindow.attachEdge === "left" && container.dynamicCornerRadius > 0.5
-                x: 0
-                y: parent.height - container.dynamicCornerRadius
-                width: container.dynamicCornerRadius
-                height: container.dynamicCornerRadius
-                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
-            }
-
-            Rectangle {
-                visible: clipboardWindow.attachEdge === "right" && container.dynamicCornerRadius > 0.5
-                x: parent.width - container.dynamicCornerRadius
-                y: 0
-                width: container.dynamicCornerRadius
-                height: container.dynamicCornerRadius
-                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
-            }
-
-            Rectangle {
-                visible: clipboardWindow.attachEdge === "right" && container.dynamicCornerRadius > 0.5
-                x: parent.width - container.dynamicCornerRadius
-                y: parent.height - container.dynamicCornerRadius
-                width: container.dynamicCornerRadius
-                height: container.dynamicCornerRadius
-                color: Qt.alpha(ThemeBackend.base, ThemeBackend.elementOpacity)
+                filletRadius: clipboardFillets.filletRadius
+                filletDir: clipboardFillets.filletDir
             }
 
             Item {
@@ -1090,6 +1034,21 @@ PanelWindow {
                             z: isSelected ? 2 : 1
 
                             property bool isSelected: index === clipList.currentIndex
+                            property real selectFlash: 0.0
+
+                            onIsSelectedChanged: {
+                                if (isSelected && rowGlass.active) selectFlashAnim.restart();
+                            }
+
+                            NumberAnimation {
+                                id: selectFlashAnim
+                                target: clipDelegateWrapper
+                                property: "selectFlash"
+                                from: 1.0
+                                to: 0.0
+                                duration: 520
+                                easing.type: Easing.OutCubic
+                            }
 
                             scale: clipCardMa.pressed ? 0.98 : 1.0
                             Behavior on scale { NumberAnimation { duration: 250; easing.type: Easing.OutQuint } }
@@ -1250,6 +1209,7 @@ PanelWindow {
                                     tintAmount: clipDelegateWrapper.isSelected ? 0.1 : 0.3
                                     tintStrength: 1.0
                                     press: clipCardMa.pressed ? 0.8 : (clipDelegateWrapper.isSelected ? 0.6 : (clipCardMa.containsMouse ? 0.25 : 0))
+                                    pulse: clipDelegateWrapper.selectFlash
                                 }
 
                                 Image {

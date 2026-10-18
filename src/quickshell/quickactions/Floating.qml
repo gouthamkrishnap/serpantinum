@@ -1137,7 +1137,7 @@ Variants {
                     width: (floatingWidget.activeEdge === "bottom" || floatingWidget.activeEdge === "top") ? floatingWidget.s(20) : floatingWidget.s(3.5)
                     height: (floatingWidget.activeEdge === "bottom" || floatingWidget.activeEdge === "top") ? floatingWidget.s(3.5) : floatingWidget.s(20)
                     radius: Math.min(ThemeBackend.borderRadius, Math.min(width, height) / 2)
-                    color: Qt.darker(ThemeBackend.mauve, 1.8)
+                    color: ThemeBackend.liquidGlass ? Qt.alpha(ThemeBackend.text, 0.85) : Qt.darker(ThemeBackend.mauve, 1.8)
                 }
 
                 MouseArea {
@@ -1237,8 +1237,16 @@ Variants {
                         }
                     }
 
+                    GlassFillets {
+                        id: sidebarFillets
+                        card: morphingBackground
+                        filletRadius: floatingWidget.outerCornerRadius > 0.5 ? floatingWidget.outerCornerRadius : 0
+                        filletDir: Qt.vector2d(-1, 0)
+                        filletInset: floatingWidget.edgeBleed
+                    }
+
                     ShaderEffect {
-                        visible: floatingWidget.outerCornerRadius > 0.5 && !ThemeBackend.liquidGlass
+                        visible: floatingWidget.outerCornerRadius > 0.5
                         x: 0
                         y: -floatingWidget.outerCornerRadius
                         width: floatingWidget.outerCornerRadius
@@ -1250,7 +1258,7 @@ Variants {
                     }
 
                     ShaderEffect {
-                        visible: floatingWidget.outerCornerRadius > 0.5 && !ThemeBackend.liquidGlass
+                        visible: floatingWidget.outerCornerRadius > 0.5
                         x: 0
                         y: parent.height
                         width: floatingWidget.outerCornerRadius
@@ -1277,10 +1285,13 @@ Variants {
                         WallpaperBlur {
                             z: -1
                             anchors.fill: parent
+                            anchors.leftMargin: floatingWidget.edgeBleed
                             topLeftRadius: parent.topLeftRadius
                             topRightRadius: parent.topRightRadius
                             bottomLeftRadius: parent.bottomLeftRadius
                             bottomRightRadius: parent.bottomRightRadius
+                            filletRadius: sidebarFillets.filletRadius
+                            filletDir: sidebarFillets.filletDir
                         }
 
                         MouseArea {
@@ -1307,6 +1318,27 @@ Variants {
                                 floatingWidget.evaluateDrag(startGlobalX, startGlobalY, gp.x, gp.y);
                             }
                             onReleased: { if (!containsMouse) floatingWidget.kickTimer(); }
+                        }
+
+                        MouseArea {
+                            id: sidebarWheelArea
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.left: parent.left
+                            anchors.leftMargin: floatingWidget.edgeBleed
+                            width: floatingWidget.sidebarW
+                            acceptedButtons: Qt.NoButton
+                            enabled: floatingWidget.isSidebarVisible
+
+                            onWheel: wheel => {
+                                let step = 0;
+                                if (wheel.angleDelta.y > 0) step = (floatingWidget.activeEdge === "right" || floatingWidget.activeEdge === "top") ? 1 : -1;
+                                else if (wheel.angleDelta.y < 0) step = (floatingWidget.activeEdge === "right" || floatingWidget.activeEdge === "top") ? -1 : 1;
+
+                                if (step !== 0) {
+                                    floatingWidget.activeIndex = Math.max(0, Math.min(floatingWidget.tabCount - 1, floatingWidget.activeIndex + step));
+                                }
+                            }
                         }
                     }
 
@@ -1428,15 +1460,6 @@ Variants {
 
                             onEntered: hideTimer.stop()
                             onExited: { if (!sidebarDragArea.containsMouse) floatingWidget.kickTimer(); }
-                            onWheel: wheel => {
-                                let step = 0;
-                                if (wheel.angleDelta.y > 0) step = (floatingWidget.activeEdge === "right" || floatingWidget.activeEdge === "top") ? 1 : -1;
-                                else if (wheel.angleDelta.y < 0) step = (floatingWidget.activeEdge === "right" || floatingWidget.activeEdge === "top") ? -1 : 1;
-
-                                if (step !== 0) {
-                                    floatingWidget.activeIndex = Math.max(0, Math.min(floatingWidget.tabCount - 1, floatingWidget.activeIndex + step));
-                                }
-                            }
                         }
                     }
 
@@ -1635,8 +1658,14 @@ Variants {
                                     tintColor: ThemeBackend.mauve
                                     tintAmount: 0.5
                                     shadow: 1
-                                    press: 0.3
+                                    press: 0.3 + 0.7 * activeHighlight.lift
                                 }
+
+                                readonly property bool isMoving: Math.abs(actualTop - targetTop) > 0.5 || Math.abs(actualBottom - targetBottom) > 0.5
+                                property real lift: (highlightGlass.active && isMoving) ? 1.0 : 0.0
+                                Behavior on lift { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                                scale: 1.0 + 0.14 * lift
+                                transformOrigin: Item.Center
 
                                 property int prevIdx: 0
                                 property int curIdx: floatingWidget.activeIndex

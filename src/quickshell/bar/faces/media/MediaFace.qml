@@ -196,11 +196,19 @@ Item {
                                 width: barWindow ? barWindow.cs(root.isCompact ? 26 : 28) : (root.isCompact ? 26 : 28)
                                 height: barWindow ? barWindow.cs(root.isCompact ? 26 : 28) : (root.isCompact ? 26 : 28)
                                 radius: barWindow ? barWindow.cs(root.isCompact ? 9 : 10) : (root.isCompact ? 9 : 10)
-                                color: root.isCompact ? Qt.lighter(ThemeBackend.surface1, 1.1) : ThemeBackend.surface1
-                                border.width: 1
+                                color: mediaThumbGlass.active ? "transparent" : (root.isCompact ? Qt.lighter(ThemeBackend.surface1, 1.1) : ThemeBackend.surface1)
+                                border.width: mediaThumbGlass.active && !root.isPlaying ? 0 : 1
                                 border.color: root.isPlaying ? ThemeBackend.mauve : (root.isCompact ? ThemeBackend.surface2 : ThemeBackend.surface1)
-                                clip: true
+                                clip: !mediaThumbGlass.active
                                 anchors.verticalCenter: parent.verticalCenter
+
+                                GlassFill {
+                                    id: mediaThumbGlass
+                                    anchors.fill: parent
+                                    radius: parent.radius
+                                    tintColor: ThemeBackend.surface1
+                                    tintAmount: 0.3
+                                }
 
                                 Text {
                                     anchors.centerIn: parent
@@ -296,7 +304,7 @@ Item {
                             buttonIcon: "󰒮"
                             iconFontSize: barWindow ? barWindow.cs(root.isCompact ? 7 : 8) : (root.isCompact ? 7 : 8)
                             accentColor: root.isCompact ? Qt.lighter(ThemeBackend.surface0, 1.18) : ThemeBackend.surface0
-                            bgOpacity: root.barOpacity
+                            bgOpacity: ThemeBackend.liquidGlass ? 1.0 : root.barOpacity
                             textColor: isHoveredOrHighlighted ? ThemeBackend.text : (root.isCompact ? ThemeBackend.subtext0 : ThemeBackend.overlay2)
                             anchors.verticalCenter: parent.verticalCenter
                             onClicked: if (player && player.canGoPrevious) player.previous()
@@ -310,7 +318,7 @@ Item {
                             buttonIcon: root.isPlaying ? "󰏤" : "󰐊"
                             iconFontSize: barWindow ? barWindow.cs(root.isCompact ? 9 : 10) : (root.isCompact ? 9 : 10)
                             accentColor: root.isCompact ? Qt.lighter(ThemeBackend.surface0, 1.18) : ThemeBackend.surface0
-                            bgOpacity: root.barOpacity
+                            bgOpacity: ThemeBackend.liquidGlass ? 1.0 : root.barOpacity
                             textColor: isHoveredOrHighlighted ? ThemeBackend.green : (root.isCompact ? Qt.lighter(ThemeBackend.text, 1.1) : ThemeBackend.text)
                             anchors.verticalCenter: parent.verticalCenter
                             onClicked: if (player && player.canTogglePlaying) player.togglePlaying()
@@ -324,7 +332,7 @@ Item {
                             buttonIcon: "󰒭"
                             iconFontSize: barWindow ? barWindow.cs(root.isCompact ? 7 : 8) : (root.isCompact ? 7 : 8)
                             accentColor: root.isCompact ? Qt.lighter(ThemeBackend.surface0, 1.18) : ThemeBackend.surface0
-                            bgOpacity: root.barOpacity
+                            bgOpacity: ThemeBackend.liquidGlass ? 1.0 : root.barOpacity
                             textColor: isHoveredOrHighlighted ? ThemeBackend.text : (root.isCompact ? ThemeBackend.subtext0 : ThemeBackend.overlay2)
                             anchors.verticalCenter: parent.verticalCenter
                             onClicked: if (player && player.canGoNext) player.next()
@@ -375,10 +383,18 @@ Item {
                     width: barWindow ? barWindow.cs(root.isCompact ? 26 : 28) : (root.isCompact ? 26 : 28)
                     height: barWindow ? barWindow.cs(root.isCompact ? 26 : 28) : (root.isCompact ? 26 : 28)
                     radius: barWindow ? barWindow.cs(root.isCompact ? 7 : 8) : (root.isCompact ? 7 : 8)
-                    color: root.isCompact ? Qt.lighter(ThemeBackend.surface1, 1.1) : ThemeBackend.surface1
-                    border.width: 1
+                    color: sideThumbGlass.active ? "transparent" : (root.isCompact ? Qt.lighter(ThemeBackend.surface1, 1.1) : ThemeBackend.surface1)
+                    border.width: sideThumbGlass.active && !(isMediaActive && isPlaying) ? 0 : 1
                     border.color: (isMediaActive && isPlaying) ? ThemeBackend.mauve : (root.isCompact ? ThemeBackend.surface2 : ThemeBackend.surface1)
-                    clip: true
+                    clip: !sideThumbGlass.active
+
+                    GlassFill {
+                        id: sideThumbGlass
+                        anchors.fill: parent
+                        radius: parent.radius
+                        tintColor: ThemeBackend.surface1
+                        tintAmount: 0.3
+                    }
 
                     Text {
                         anchors.centerIn: parent
@@ -449,7 +465,7 @@ Item {
                         buttonIcon: "󰒮"
                         iconFontSize: barWindow ? barWindow.cs(root.isCompact ? 6 : 7) : (root.isCompact ? 6 : 7)
                         accentColor: root.isCompact ? Qt.lighter(ThemeBackend.surface0, 1.18) : ThemeBackend.surface0
-                        bgOpacity: root.barOpacity
+                        bgOpacity: ThemeBackend.liquidGlass ? 1.0 : root.barOpacity
                         textColor: isHoveredOrHighlighted ? ThemeBackend.text : (root.isCompact ? ThemeBackend.subtext0 : ThemeBackend.overlay2)
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: if (targetPlayer && targetPlayer.canGoPrevious) targetPlayer.previous()
@@ -462,7 +478,7 @@ Item {
                         buttonIcon: (isMediaActive && isPlaying) ? "󰏤" : "󰐊"
                         iconFontSize: barWindow ? barWindow.cs(root.isCompact ? 8 : 9) : (root.isCompact ? 8 : 9)
                         accentColor: root.isCompact ? Qt.lighter(ThemeBackend.surface0, 1.18) : ThemeBackend.surface0
-                        bgOpacity: root.barOpacity
+                        bgOpacity: ThemeBackend.liquidGlass ? 1.0 : root.barOpacity
                         textColor: isHoveredOrHighlighted ? ThemeBackend.green : (root.isCompact ? Qt.lighter(ThemeBackend.text, 1.1) : ThemeBackend.text)
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: if (targetPlayer && targetPlayer.canTogglePlaying) targetPlayer.togglePlaying()
@@ -475,7 +491,7 @@ Item {
                         buttonIcon: "󰒭"
                         iconFontSize: barWindow ? barWindow.cs(root.isCompact ? 6 : 7) : (root.isCompact ? 6 : 7)
                         accentColor: root.isCompact ? Qt.lighter(ThemeBackend.surface0, 1.18) : ThemeBackend.surface0
-                        bgOpacity: root.barOpacity
+                        bgOpacity: ThemeBackend.liquidGlass ? 1.0 : root.barOpacity
                         textColor: isHoveredOrHighlighted ? ThemeBackend.text : (root.isCompact ? ThemeBackend.subtext0 : ThemeBackend.overlay2)
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: if (targetPlayer && targetPlayer.canGoNext) targetPlayer.next()
