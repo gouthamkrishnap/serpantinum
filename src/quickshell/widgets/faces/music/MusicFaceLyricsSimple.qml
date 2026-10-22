@@ -108,7 +108,7 @@ Item {
 
     Text {
         anchors.centerIn: parent
-        visible: !(Lyrics.isMediaActive && Lyrics.hasLyrics) && (root.showNoLyrics || !Lyrics.isMediaActive || Lyrics.loading)
+        visible: !(Lyrics.isMediaActive && Lyrics.hasLyrics) && (root.showNoLyrics || Lyrics.loading)
         text: {
             if (typeof I18n !== "undefined") {
                 if (!Lyrics.isMediaActive) return I18n.t("music.nothing_playing");
